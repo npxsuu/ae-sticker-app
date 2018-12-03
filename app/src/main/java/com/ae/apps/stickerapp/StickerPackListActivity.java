@@ -22,7 +22,8 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.InterstitialAd;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ public class StickerPackListActivity extends BaseActivity {
     private LinearLayoutManager packLayoutManager;
     private RecyclerView packRecyclerView;
     private StickerPackListAdapter allStickerPacksListAdapter;
+    private InterstitialAd mInterstitialAd;
     WhiteListCheckAsyncTask whiteListCheckAsyncTask;
     ArrayList<StickerPack> stickerPackList;
 
@@ -45,13 +47,21 @@ public class StickerPackListActivity extends BaseActivity {
         packRecyclerView = findViewById(R.id.sticker_pack_list);
         stickerPackList = getIntent().getParcelableArrayListExtra(EXTRA_STICKER_PACK_LIST_DATA);
         showStickerPackList(stickerPackList);
+        // Initialize the Mobile Ads SDK.
 
-        MobileAds.initialize(this, getString(R.string.google_admob_app_id) );
+        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
 
         // https://developers.google.com/admob/android/banner
         AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+
+
+        // Create the InterstitialAd and set the adUnitId.
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+
     }
 
     @Override
@@ -71,6 +81,7 @@ public class StickerPackListActivity extends BaseActivity {
     }
 
     private void showStickerPackList(List<StickerPack> stickerPackList) {
+
         allStickerPacksListAdapter = new StickerPackListAdapter(stickerPackList, onAddButtonClickedListener);
         packRecyclerView.setAdapter(allStickerPacksListAdapter);
         packLayoutManager = new LinearLayoutManager(this);
@@ -86,6 +97,11 @@ public class StickerPackListActivity extends BaseActivity {
 
 
     private StickerPackListAdapter.OnAddButtonClickedListener onAddButtonClickedListener = pack -> {
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        } else {
+            Log.d("TAG", "nope");
+        }
         Intent intent = new Intent();
         intent.setAction("com.whatsapp.intent.action.ENABLE_STICKER_PACK");
         intent.putExtra(StickerPackDetailsActivity.EXTRA_STICKER_PACK_ID, pack.identifier);
